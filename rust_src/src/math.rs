@@ -18,8 +18,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     let y = check_number_coerce_marker(y);
 
     if x.is_float() || y.is_float() {
-        let ret = floatfns::fmod_float(x.to_raw(), y.to_raw());
-        return LispObject::from_raw(ret);
+        return floatfns::fmod_float(x, y);
     }
 
     // TODO: too much checking here
@@ -316,17 +315,13 @@ fn min(args: &mut [LispObject]) -> LispObject {
 /// Return the absolute value of ARG.
 #[lisp_fn]
 fn abs(arg: LispObject) -> LispObject {
-    if !arg.is_number() {
+    if let Some(f) = arg.as_float() {
+        LispObject::from_float(f.abs())
+    } else if let Some(n) = arg.as_fixnum() {
+        LispObject::from_fixnum(n.abs())
+    } else {
         unsafe {
             wrong_type_argument(Qnumberp, arg.to_raw());
-        }
-    }
-
-    match arg.as_float() {
-        Some(f) => LispObject::from_float(f.abs()),
-        _ => {
-            let n = arg.as_fixnum().unwrap();
-            LispObject::from_fixnum(n.abs())
         }
     }
 }
